@@ -1,13 +1,15 @@
 {
-  "name": "@vscode-toolbox/cli",
-  "version": "1.0.1",
+  "name": "vscode-toolbox",
+  "version": "1.0.4",
   "scripts": {
-    "build": "tsc"
+    "prebuild": "rm -r dist || mkdir dist",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "type": "module",
   "homepage": "https://github.com/shanto/vscode-toolbox",
   "author": {
-    "name": "Shanto",
+    "name": "Shaan",
     "email": "mail@shaan.icu",
     "url": "https://github.com/shanto"
   },
