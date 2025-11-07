@@ -1,0 +1,36 @@
+{
+  "name": "@vscode-toolbox/cli",
+  "version": "1.0.1",
+  "scripts": {
+    "build": "tsc"
+  },
+  "type": "module",
+  "homepage": "https://github.com/shanto/vscode-toolbox",
+  "author": {
+    "name": "Shanto",
+    "email": "mail@shaan.icu",
+    "url": "https://github.com/shanto"
+  },
+  "license": "MIT",
+  "description": "Mange profiles and extensions under VS Code and other IDE products built from it.",
+  "dependencies": {
+    "commander": "^14.0.2",
+    "js-yaml": "^4.1.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.10.0",
+    "@types/prompts": "^2.4.9",
+    "ts-node": "^10.9.2"
+  },
+  "main": "dist/cli.js",
+  "bin": {
+    "vscode-toolbox": "dist/cli.js"
+  },
+  "files": [
+    "dist/*",
+    "*.md",
+    "package.json"
+  ]
+}

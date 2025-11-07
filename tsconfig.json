@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["node"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "moduleDetection": "force",
+    "rewriteRelativeImportExtensions": true,
+    "resolveJsonModule": true,
+    "target": "ESNext",
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/*.ts", "src/*.d.ts"]
+}

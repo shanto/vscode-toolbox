@@ -1,0 +1,7 @@
+/node_modules/**
+/dist/**
+/*lock*
+/config.yml*
+.zed/**
+.vscode/**
+.windsurf/**
