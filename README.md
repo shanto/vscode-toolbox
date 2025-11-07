@@ -23,7 +23,7 @@ With the increasing number of IDE products based on VS Code, management of exten
 This program directly operates (read) on the config storage maintained by relevant IDE products. For installing or removing extensions, CLI program of the corresponding IDE is used. Configuration file for this program is stored as an editable YAML file.
 
 ```
-Usage: npx @vscode-toolbox/cli [options] [command]
+Usage: npx vscode-toolbox [options] [command]
 
 Options:
   -v, --variant <cmd>                VS Code product variant to operate on

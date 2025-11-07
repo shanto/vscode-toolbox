@@ -1,8 +1,9 @@
 {
-  "name": "@vscode-toolbox/cli",
-  "version": "1.0.1",
+  "name": "vscode-toolbox",
+  "version": "1.0.4",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "publish": "tsc && npm publish --access public"
   },
   "type": "module",
   "homepage": "https://github.com/shanto/vscode-toolbox",
