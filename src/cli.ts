@@ -4,23 +4,15 @@ import path from "node:path";
 
 import { program } from "commander";
 import prompts from "prompts";
-import type { PromptObject } from "prompts";
 
 import yaml from "js-yaml";
 
-import { YmlConfig, pkgInfo, colors, HOME } from "./utils.ts";
 import { VSCodeFlavor } from "./vscode.ts";
+import { HOME, YmlConfig, pkgInfo, promptToConfirm, colors } from "./utils.ts";
 const { version, name: command, homepage } = pkgInfo;
 const dotName = Object.keys(pkgInfo.bin).shift();
 
 const config = new YmlConfig(path.join(HOME, `.${dotName}`, "config.yml"));
-
-const promptToConfirm: PromptObject = {
-  name: "confirm",
-  type: "confirm",
-  message: "Continue?",
-  initial: true,
-};
 
 let variant: VSCodeFlavor;
 

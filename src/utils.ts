@@ -4,6 +4,7 @@ import subprocess from "node:child_process";
 
 import yaml from "js-yaml";
 import kleur from "kleur";
+import type { PromptObject } from "prompts";
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -93,3 +94,10 @@ export function toTitleCase(str: string) {
     (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase(),
   );
 }
+
+export const promptToConfirm: PromptObject = {
+  name: "confirm",
+  type: "confirm",
+  message: "Continue?",
+  initial: true,
+};
