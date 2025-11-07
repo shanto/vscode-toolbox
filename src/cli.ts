@@ -126,7 +126,7 @@ program
   )
   .action(async function () {
     const { grn, blu } = colors;
-    const globals = config.get("globals") as [];
+    const globals = config.get("globals") as string[];
     console.log(
       `Installing extensions from config into ${blu(variant.brand)} [Global]: ${grn(globals.join(", "))}`,
     );
@@ -165,7 +165,7 @@ program
   .action(async function () {
     const { grn, blu } = colors;
     const profile = variant.findProfile("name", this.optsWithGlobals().profile);
-    const buckets: Record<string, any> = config.get("buckets") || {};
+    const buckets = config.get("buckets") as ConfRecord;
     if (Object.keys(buckets).length < 1) {
       console.error("No bucket found in config");
       return;
@@ -181,7 +181,7 @@ program
                 return {
                   title: b,
                   value: b,
-                  description: buckets[b].join(", "),
+                  description: (buckets[b] as string[]).join(", "),
                 };
               });
             },
@@ -200,6 +200,15 @@ program
     if (!confirm) return;
     variant.installExtensions(exts, profile?.name);
     console.log(grn("Done!"));
+  });
+
+program
+  .command("dump-config")
+  .alias("conf")
+  .alias("dc")
+  .description(`Dump contents of config\n(${config.file})`)
+  .action(async function () {
+    console.log(yaml.dump(config.load()));
   });
 
 program.parseAsync().then(() => {});

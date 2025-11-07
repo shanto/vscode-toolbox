@@ -105,3 +105,6 @@ declare type UserProfile = {
 };
 
 declare type UserProfileEx = UserProfile & { extensions: ExtensionMeta[] };
+
+declare type ConfValue = string | object | string[] | object[] | number | null;
+declare type ConfRecord = Record<string, ConfValue>;

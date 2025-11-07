@@ -52,30 +52,28 @@ export class YmlConfig {
   }
   load() {
     this.assertFile();
-    return yaml.load(readFileSync(this.file).toString());
+    return yaml.load(readFileSync(this.file).toString()) || ({} as ConfRecord);
   }
   get(key: string) {
     const data = this.load() || {};
     function getConfigValue<T extends object>(key: string, node: T): unknown {
-      return key.split(".").reduce<any>((c, k) => {
-        return c && Object.hasOwn(c, k)
-          ? (c as Record<string, unknown>)[k]
-          : null;
+      return key.split(".").reduce<ConfValue>((c, k) => {
+        return c && Object.hasOwn(c as object, k) ? (c as ConfRecord)[k] : null;
       }, node);
     }
-    return getConfigValue(key, data);
+    return getConfigValue(key, data) as ConfValue;
   }
-  set(key: string, value: string | boolean | string[]) {
-    const data = this.load() || {};
+  set(key: string, value: ConfValue) {
+    const data = this.load() as ConfRecord;
     const keys = key.split(".");
     const lastKey = keys.pop();
-    let node: Record<string, any> = data;
+    let node = data;
 
     for (const k of keys) {
-      if (!Object.hasOwn(node, k) || typeof node[k] !== "object") {
+      if (!node || !Object.hasOwn(node, k) || typeof node[k] !== "object") {
         node[k] = {};
       }
-      node = node[k];
+      node = node[k] as ConfRecord;
     }
 
     if (lastKey) node[lastKey] = value;
