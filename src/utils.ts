@@ -6,7 +6,13 @@ import yaml from "js-yaml";
 import kleur from "kleur";
 import type { PromptObject } from "prompts";
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  globSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 
 const IS_WIN = os.platform() === "win32";
@@ -27,14 +33,23 @@ export const pkgInfo = createRequire(import.meta.dirname)(
 );
 
 export function getBinPath(cmd: string) {
+  const pcmd = IS_WIN ? `${cmd}.cmd` : cmd;
   try {
     const result = subprocess
-      .execSync(IS_WIN ? `where ${cmd}.cmd` : `which ${cmd}`)
+      .execSync(IS_WIN ? `where ${pcmd}` : `which ${pcmd}`, {
+        stdio: ["inherit", "inherit", "ignore"],
+      })
       .toString()
       .split(/[\r\n]+/)
       .filter(Boolean)[0];
     if (result) return result.trim();
   } catch {
+    const res = globSync(
+      path.join(process.env.LOCALAPPDATA || "", "Programs", "*", "bin", pcmd),
+    );
+    if (res.length) {
+      return res.shift();
+    }
     throw Error(`Command not found: ${cmd}. Is it in PATH?`);
   }
 }
@@ -93,9 +108,11 @@ export function toTitleCase(str: string) {
   );
 }
 
-export const promptToConfirm: PromptObject = {
-  name: "confirm",
-  type: "confirm",
-  message: "Continue?",
-  initial: true,
+export const promptToConfirm = (message = "Continue?") => {
+  return {
+    name: "confirm",
+    type: "confirm",
+    message: message,
+    initial: true,
+  } as PromptObject;
 };

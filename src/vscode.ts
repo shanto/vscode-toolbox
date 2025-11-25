@@ -1,8 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import subprocess from "node:child_process";
 import path from "node:path";
+import os from "node:os";
 import { getBinPath, toTitleCase } from "./utils.ts";
 import { APPDATA, HOME, colors } from "./utils.ts";
+
+const IS_WIN = os.platform() === "win32";
 
 export class VSCodeFlavor {
   name: string;
@@ -32,16 +35,25 @@ export class VSCodeFlavor {
     this.brand = this.meta.brand;
   }
 
-  exec(cmd: string) {
-    return subprocess
-      .execSync(`node "${this.clijs}" ${cmd}`)
-      .toString()
-      .split(/[\r\n]+/)
-      .filter(Boolean);
+  exec(cmd: string, options?: object) {
+    return subprocess.execSync(
+      `node --no-deprecation "${this.clijs}" ${cmd}`,
+      options || { stdio: ["inherit", "inherit", "ignore"] },
+    );
+  }
+
+  execLine(cmd: string) {
+    const ret = this.exec(cmd);
+    return ret && Object.hasOwn(ret, "toString")
+      ? ret
+          .toString()
+          .split(/[\r\n]+/)
+          .filter(Boolean)
+      : [];
   }
 
   get version() {
-    return this.exec("--version")[0];
+    return this.execLine("--version")[0];
   }
 
   get dataPath() {
@@ -100,26 +112,31 @@ export class VSCodeFlavor {
   }
 
   get profiles(): UserProfileEx[] {
-    return this.globalStorage.userDataProfiles.map((profile: UserProfileEx) => {
-      const this_path = path.join(
-        this.dataPath,
-        "profiles",
-        profile.location as string,
-      );
-      return {
-        ...profile,
-        path: this_path,
-        extensions: (() => {
-          try {
-            return JSON.parse(
-              readFileSync(path.join(this_path, "extensions.json")).toString(),
-            ).map(VSCodeFlavor.extensionMutator);
-          } catch {
-            return [];
-          }
-        })(),
-      } as UserProfileEx;
-    });
+    const profiles = this.globalStorage.userDataProfiles;
+    return profiles
+      ? profiles.map((profile: UserProfileEx) => {
+          const this_path = path.join(
+            this.dataPath,
+            "profiles",
+            profile.location as string,
+          );
+          return {
+            ...profile,
+            path: this_path,
+            extensions: (() => {
+              try {
+                return JSON.parse(
+                  readFileSync(
+                    path.join(this_path, "extensions.json"),
+                  ).toString(),
+                ).map(VSCodeFlavor.extensionMutator);
+              } catch {
+                return [];
+              }
+            })(),
+          } as UserProfileEx;
+        })
+      : [];
   }
 
   findProfile(key: string, val: string) {
@@ -130,6 +147,24 @@ export class VSCodeFlavor {
       (p: Record<string, any>) => lower(p[key]) === lower(val),
     );
     return ret.length ? (ret.shift() as UserProfileEx) : null;
+  }
+
+  createProfile(name: string) {
+    const options = {
+      windowsHide: true,
+      timeout: 10000,
+    };
+
+    try {
+      subprocess.execSync(`"${this.binary}" --profile "${name}" -w`, options);
+    } catch {
+      try {
+        IS_WIN &&
+          subprocess.execSync(
+            `taskkill /F /FI \"WINDOWTITLE eq ${name} - ${this.brand}*\" /T`,
+          );
+      } catch {}
+    }
   }
 
   get defaultProfile() {
@@ -195,9 +230,9 @@ export class VSCodeFlavor {
     profile: UserProfile["name"] = "Default",
     global: boolean = false,
   ) {
-    let res: string[] = [];
+    let res = [];
     try {
-      res = this.exec(`--install-extension "${id}" --profile "${profile}"`);
+      res = this.execLine(`--install-extension "${id}" --profile "${profile}"`);
     } catch (e) {
       if (!(e as Error).message.match(/not found/)) throw e;
     }

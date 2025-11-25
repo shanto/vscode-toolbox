@@ -5,10 +5,18 @@ import path from "node:path";
 import { program } from "commander";
 import prompts from "prompts";
 
+import { titleCase } from "title-case";
+
 import yaml from "js-yaml";
 
 import { VSCodeFlavor } from "./vscode.ts";
-import { HOME, YmlConfig, pkgInfo, promptToConfirm, colors } from "./utils.ts";
+import {
+  HOME,
+  YmlConfig,
+  pkgInfo,
+  promptToConfirm as promptConfirm,
+  colors,
+} from "./utils.ts";
 const { version, name: command, homepage } = pkgInfo;
 const dotName = Object.keys(pkgInfo.bin).shift();
 
@@ -31,8 +39,23 @@ program
     "-a, --auto",
     "Enable auto mode for scripted operations. No prompts or confirmations",
   )
-  .hook("preSubcommand", (thisCommand) => {
-    variant = new VSCodeFlavor(thisCommand.optsWithGlobals().variant);
+  .hook("preSubcommand", async (thisCommand) => {
+    const opts = thisCommand.optsWithGlobals();
+    variant = new VSCodeFlavor(opts.variant);
+    const name = opts.profile;
+    const { red } = colors;
+    const profile = variant.findProfile("name", name);
+    if (profile === null) {
+      const { confirm } = opts.auto
+        ? { confirm: true }
+        : await prompts(
+            promptConfirm(
+              `Profile named ${red(name)} does not exist. Create new?`,
+            ),
+          );
+      if (!confirm) process.exit(0);
+      variant.createProfile(name);
+    }
   })
   .configureHelp({ showGlobalOptions: true })
   .addHelpText(
@@ -80,7 +103,7 @@ program
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     variant.installExtensions(exts, profile, this.opts().global);
   });
@@ -96,7 +119,7 @@ program
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     config.set("globals", globals);
     console.log(grn("Saved!"));
@@ -113,7 +136,7 @@ program
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     variant.uninstallExtensions(globals);
     console.log(grn("Clear!"));
@@ -132,7 +155,7 @@ program
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     variant.installGlobalExtensions(globals);
     console.log(grn("Done!"));
@@ -152,7 +175,7 @@ program
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     config.set(`buckets.${bucket}`, exts);
   });
@@ -188,18 +211,68 @@ program
             message: "Pick a bucket",
           });
     if (!bucket) return;
-    console.log(bucket);
-    if (!bucket) return;
     const exts = config.get(`buckets.${bucket}`) as [];
     console.log(
       `Installing extensions from bucket ${grn(bucket)} to ${blu(variant.brand)} profile ${blu(profile?.name || "Default")}: ${grn(exts.join(", "))}`,
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
-      : await prompts(promptToConfirm);
+      : await prompts(promptConfirm());
     if (!confirm) return;
     variant.installExtensions(exts, profile?.name);
     console.log(grn("Done!"));
+  });
+
+program
+  .command("list-extensions")
+  .alias("extensions")
+  .alias("le")
+  .description(`List extensions from default or selected profile (-p <name>)`)
+  .action(async function () {
+    const profile = variant.findProfile("name", this.optsWithGlobals().profile);
+    const extensions =
+      (profile && profile.extensions) || variant.defaultExtensions;
+    console.log(extensions.map((x: ExtensionMeta) => x.id).join(" "));
+  });
+
+program
+  .command("uninstall-extensions")
+  .alias("ue")
+  .argument(
+    "<extensions...>",
+    "Extension IDs separated by spaces e.g. esbenp.prettier-vscode github.github-vscode-theme",
+  )
+  .description(
+    `Uninstall extensions from default or selected profile (-p <name>)`,
+  )
+  .action(async function () {
+    const profile = variant.findProfile("name", this.optsWithGlobals().profile);
+    const exts = this.args;
+    const { blu, grn } = colors;
+    console.log(
+      `Uninstalling extensions from ${blu(variant.brand)} [${profile?.name || "Default"}]: ${grn(exts.join(", "))}`,
+    );
+    const { confirm } = this.optsWithGlobals().auto
+      ? { confirm: true }
+      : await prompts(promptConfirm());
+    if (!confirm) return;
+    variant.uninstallExtensions(exts, profile?.name);
+  });
+
+program
+  .command("create-profile <name>")
+  .alias("profile")
+  .alias("cp")
+  .description(`Create profile with the given name`)
+  .action(async function () {
+    const name = titleCase(this.args[0]);
+    const { blu } = colors;
+    console.log(`Creating new profile in ${blu(variant.brand)}: ${name}`);
+    const { confirm } = this.optsWithGlobals().auto
+      ? { confirm: true }
+      : await prompts(promptConfirm());
+    if (!confirm) return;
+    variant.createProfile(name);
   });
 
 program

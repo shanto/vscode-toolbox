@@ -1,6 +1,6 @@
 {
   "name": "vscode-toolbox",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "scripts": {
     "cli": "node src/cli.ts",
     "prebuild": "rm -r dist || mkdir dist",
@@ -19,7 +19,8 @@
   "dependencies": {
     "commander": "^14.0.2",
     "js-yaml": "^4.1.0",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "title-case": "^4.3.2"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
