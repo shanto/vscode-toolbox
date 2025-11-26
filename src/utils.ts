@@ -20,6 +20,11 @@ const IS_WIN = os.platform() === "win32";
 const { env } = process;
 export const HOME = os.homedir();
 export const APPDATA = env.APPDATA || path.join(HOME, "AppData", "Roaming");
+export const LOCALAPPDATA =
+  env.LOCALAPPDATA || path.join(HOME, "AppData", "Local");
+export const USERPROGRAMS = path.join(LOCALAPPDATA, "Programs");
+export const PROGRAMFILES =
+  env.ProgramFiles || path.join("C:", "Program Files");
 
 export const colors = {
   grn: kleur.green,
@@ -44,9 +49,10 @@ export function getBinPath(cmd: string) {
       .filter(Boolean)[0];
     if (result) return result.trim();
   } catch {
-    const res = globSync(
-      path.join(process.env.LOCALAPPDATA || "", "Programs", "*", "bin", pcmd),
-    );
+    const res = [
+      ...globSync(path.join(USERPROGRAMS, "*", "bin", pcmd)),
+      ...globSync(path.join(PROGRAMFILES, "*", "bin", pcmd)),
+    ];
     if (res.length) {
       return res.shift();
     }

@@ -35,25 +35,30 @@ export class VSCodeFlavor {
     this.brand = this.meta.brand;
   }
 
+  get manifest() {
+    const manifest = path.resolve(
+      this.binary,
+      path.join("..", ".."),
+      path.join("resources", "app", "package.json"),
+    );
+    return JSON.parse(readFileSync(manifest).toString());
+  }
+
   exec(cmd: string, options?: object) {
     return subprocess.execSync(
-      `node --no-deprecation "${this.clijs}" ${cmd}`,
-      options || { stdio: ["inherit", "inherit", "ignore"] },
+      `node "${this.clijs}" ${cmd}`,
+      options || { windowsHide: true, stdio: ["inherit", "inherit", "ignore"] },
     );
   }
 
-  execLine(cmd: string) {
-    const ret = this.exec(cmd);
+  execLine(cmd: string, options?: object) {
+    const ret = this.exec(cmd, options);
     return ret && Object.hasOwn(ret, "toString")
       ? ret
           .toString()
           .split(/[\r\n]+/)
           .filter(Boolean)
       : [];
-  }
-
-  get version() {
-    return this.execLine("--version")[0];
   }
 
   get dataPath() {
@@ -188,7 +193,7 @@ export class VSCodeFlavor {
       }),
     ];
     const summary = {
-      brand: this.brand,
+      product: `${this.brand} v${this.manifest["version"]}`,
       binary: this.binary,
       data: this.dataPath,
       extensions: this.extensionStoragePath,
@@ -211,7 +216,6 @@ export class VSCodeFlavor {
       throw Error(`Invalid state for: ${id}. Found ${that.length} instances.`);
     }
     const idx = all.findIndex(matchId);
-    // console.debug(`Setting ${key}=${value} for ${id}`);
     if (!Object.hasOwn(all[idx], "metadata")) all[idx].metadata = {};
     all[idx].metadata[key] = value;
     writeFileSync(this.extensionStoragePath, JSON.stringify(all));
@@ -230,14 +234,14 @@ export class VSCodeFlavor {
     profile: UserProfile["name"] = "Default",
     global: boolean = false,
   ) {
+    if (global && profile !== "Default")
+      throw Error("Cannot set global inside non-Default profile");
     let res = [];
     try {
       res = this.execLine(`--install-extension "${id}" --profile "${profile}"`);
     } catch (e) {
       if (!(e as Error).message.match(/not found/)) throw e;
     }
-    if (global && profile !== "Default")
-      throw Error("Cannot set global inside non-Default profile");
     if (global && res.length)
       this.setExtensionMeta(id, "isApplicationScoped", true);
   }
@@ -247,7 +251,7 @@ export class VSCodeFlavor {
     profile: UserProfile["name"] = "Default",
     global: boolean = false,
   ) {
-    extensions.map((id) => {
+    return extensions.map((id) => {
       return this.installExtension(id, profile, global);
     });
   }

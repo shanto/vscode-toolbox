@@ -45,7 +45,7 @@ program
     const name = opts.profile;
     const { red } = colors;
     const profile = variant.findProfile("name", name);
-    if (profile === null) {
+    if (profile === null && !!name) {
       const { confirm } = opts.auto
         ? { confirm: true }
         : await prompts(
@@ -96,10 +96,7 @@ program
     const profile = this.optsWithGlobals().profile;
     const global_label = this.opts().global ? " [Global]" : "";
     console.log(
-      `Selected profile: ${blu(profile || "Default")}${grn(global_label)} on ${blu(variant.brand)}`,
-    );
-    console.log(
-      `Installing (${grn(exts.length)}) extensions: ${grn(exts.join(", "))}`,
+      `Installing (${grn(exts.length)}) extensions into ${blu(variant.brand)} [${profile || "Default"}${global_label}]: ${grn(exts.join(", "))}`,
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
@@ -213,7 +210,7 @@ program
     if (!bucket) return;
     const exts = config.get(`buckets.${bucket}`) as [];
     console.log(
-      `Installing extensions from bucket ${grn(bucket)} to ${blu(variant.brand)} profile ${blu(profile?.name || "Default")}: ${grn(exts.join(", "))}`,
+      `Restoring extensions from bucket ${grn(bucket)} to ${blu(variant.brand)} [${profile?.name || "Default"}]: ${grn(exts.join(", "))}`,
     );
     const { confirm } = this.optsWithGlobals().auto
       ? { confirm: true }
