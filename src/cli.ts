@@ -49,10 +49,10 @@ program
       const { confirm } = opts.auto
         ? { confirm: true }
         : await prompts(
-            promptConfirm(
-              `Profile named ${red(name)} does not exist. Create new?`,
-            ),
-          );
+          promptConfirm(
+            `Profile named ${red(name)} does not exist. Create new?`,
+          ),
+        );
       if (!confirm) process.exit(0);
       variant.createProfile(name);
     }
@@ -82,6 +82,7 @@ program
   });
 program
   .command("install")
+  .alias("ie")
   .argument(
     "<extensions...>",
     "Extension IDs separated by spaces e.g. esbenp.prettier-vscode github.github-vscode-theme",
@@ -194,19 +195,19 @@ program
       this.args[0] && Object.hasOwn(buckets, this.args[0])
         ? { bucket: this.args[0] }
         : await prompts({
-            name: "bucket",
-            type: "select",
-            choices: () => {
-              return Object.keys(buckets).map((b) => {
-                return {
-                  title: b,
-                  value: b,
-                  description: (buckets[b] as string[]).join(", "),
-                };
-              });
-            },
-            message: "Pick a bucket",
-          });
+          name: "bucket",
+          type: "select",
+          choices: () => {
+            return Object.keys(buckets).map((b) => {
+              return {
+                title: b,
+                value: b,
+                description: (buckets[b] as string[]).join(", "),
+              };
+            });
+          },
+          message: "Pick a bucket",
+        });
     if (!bucket) return;
     const exts = config.get(`buckets.${bucket}`) as [];
     console.log(
@@ -281,4 +282,4 @@ program
     console.log(yaml.dump(config.load()));
   });
 
-program.parseAsync().then(() => {});
+program.parseAsync().then(() => { });
