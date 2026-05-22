@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import subprocess from "node:child_process";
 import path from "node:path";
 import os from "node:os";
@@ -24,23 +24,25 @@ export class VSCodeFlavor {
   constructor(name: string, binary?: string) {
     this.name = name;
     this.binary = binary || getBinPath(name) || name;
-    this.clijs = path.resolve(
-      this.binary,
-      path.join("..", ".."),
-      path.join("resources", "app", "out", "cli.js"),
-    );
+    this.clijs = path.join(this.distroot, "resources", "app", "out", "cli.js");
     this.meta = Object.hasOwn(this.META, name)
       ? this.META[name]
       : { dot: name, brand: toTitleCase(name) };
     this.brand = this.meta.brand;
   }
 
+  get distroot() {
+    const script = path.join(...[path.dirname, path.basename].map((fn) => fn(this.binary, ".cmd")));
+    let components = [path.resolve(path.join(this.binary, "..", ".."))];
+    if (existsSync(script)) {
+      const vmatch = readFileSync(script).toString().match(/VERSIONFOLDER="(\w+)"/);
+      vmatch.length && components.push(vmatch[1]);
+    }
+    return path.join(...components);
+  }
+
   get manifest() {
-    const manifest = path.resolve(
-      this.binary,
-      path.join("..", ".."),
-      path.join("resources", "app", "package.json"),
-    );
+    const manifest = path.join(this.distroot, "resources", "app", "package.json");
     return JSON.parse(readFileSync(manifest).toString());
   }
 
