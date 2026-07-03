@@ -7,17 +7,24 @@ import { APPDATA, HOME, colors } from "./utils.ts";
 
 const IS_WIN = os.platform() === "win32";
 
+type VSCodeMeta = { dot?: string; brand: string; data?: string };
 export class VSCodeFlavor {
   name: string;
   brand: string;
   binary: string;
   clijs: string;
-  meta: { dot: string; brand: string };
+  data: string;
+  meta: VSCodeMeta;
 
-  META: Record<string, any> = {
+  META: Record<string, VSCodeMeta> = {
     code: {
       dot: "vscode",
       brand: "VS Code",
+      data: "Code",
+    },
+    "antigravity-ide": {
+      brand: "Antigravity IDE",
+      data: "Antigravity IDE",
     },
   };
 
@@ -29,20 +36,30 @@ export class VSCodeFlavor {
       ? this.META[name]
       : { dot: name, brand: toTitleCase(name) };
     this.brand = this.meta.brand;
+    this.data = this.meta.data || this.meta.brand;
   }
 
   get distroot() {
-    const script = path.join(...[path.dirname, path.basename].map((fn) => fn(this.binary, ".cmd")));
+    const script = path.join(
+      ...[path.dirname, path.basename].map((fn) => fn(this.binary, ".cmd")),
+    );
     let components = [path.resolve(path.join(this.binary, "..", ".."))];
     if (existsSync(script)) {
-      const vmatch = readFileSync(script).toString().match(/VERSIONFOLDER="(\w+)"/);
-      vmatch.length && components.push(vmatch[1]);
+      const vmatch = readFileSync(script)
+        .toString()
+        .match(/VERSIONFOLDER="(\w+)"/);
+      vmatch?.length && components.push(vmatch[1]);
     }
     return path.join(...components);
   }
 
   get manifest() {
-    const manifest = path.join(this.distroot, "resources", "app", "package.json");
+    const manifest = path.join(
+      this.distroot,
+      "resources",
+      "app",
+      "package.json",
+    );
     return JSON.parse(readFileSync(manifest).toString());
   }
 
@@ -60,18 +77,21 @@ export class VSCodeFlavor {
     const ret = this.exec(cmd, options);
     return ret && typeof ret === "string"
       ? ret
-        .toString()
-        .split(/[\r\n]+/)
-        .filter(Boolean)
+          .toString()
+          .split(/[\r\n]+/)
+          .filter(Boolean)
       : [];
   }
 
   filterError(msg: string) {
-    return msg.replace(/^[^\r\n]*depends on antigravityAnalytics.+[\r\n]+/g, "");
+    return msg.replace(
+      /^[^\r\n]*depends on antigravityAnalytics.+[\r\n]+/g,
+      "",
+    );
   }
 
   get dataPath() {
-    return path.join(APPDATA, this.name, "User");
+    return path.join(APPDATA, this.data, "User");
   }
 
   get globalStoragePath() {
@@ -129,27 +149,27 @@ export class VSCodeFlavor {
     const profiles = this.globalStorage.userDataProfiles;
     return profiles
       ? profiles.map((profile: UserProfileEx) => {
-        const this_path = path.join(
-          this.dataPath,
-          "profiles",
-          profile.location as string,
-        );
-        return {
-          ...profile,
-          path: this_path,
-          extensions: (() => {
-            try {
-              return JSON.parse(
-                readFileSync(
-                  path.join(this_path, "extensions.json"),
-                ).toString(),
-              ).map(VSCodeFlavor.extensionMutator);
-            } catch {
-              return [];
-            }
-          })(),
-        } as UserProfileEx;
-      })
+          const this_path = path.join(
+            this.dataPath,
+            "profiles",
+            profile.location as string,
+          );
+          return {
+            ...profile,
+            path: this_path,
+            extensions: (() => {
+              try {
+                return JSON.parse(
+                  readFileSync(
+                    path.join(this_path, "extensions.json"),
+                  ).toString(),
+                ).map(VSCodeFlavor.extensionMutator);
+              } catch {
+                return [];
+              }
+            })(),
+          } as UserProfileEx;
+        })
       : [];
   }
 
@@ -177,7 +197,7 @@ export class VSCodeFlavor {
           subprocess.execSync(
             `taskkill /F /FI \"WINDOWTITLE eq ${name} - ${this.brand}*\" /T`,
           );
-      } catch { }
+      } catch {}
     }
   }
 

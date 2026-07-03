@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "types": ["node"],
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "types": [
+      "node"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "allowSyntheticDefaultImports": true,
     "moduleDetection": "force",
     "rewriteRelativeImportExtensions": true,
@@ -13,5 +14,8 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/*.ts", "src/*.d.ts"]
+  "include": [
+    "src/*.ts",
+    "src/*.d.ts"
+  ]
 }
