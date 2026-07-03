@@ -22,6 +22,11 @@ export class VSCodeFlavor {
       brand: "VS Code",
       data: "Code",
     },
+    "code-insiders": {
+      dot: "vscode-insiders",
+      brand: "VS Code Insiders",
+      data: "Code - Insiders",
+    },
     "antigravity-ide": {
       brand: "Antigravity IDE",
       data: "Antigravity IDE",
