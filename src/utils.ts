@@ -12,6 +12,8 @@ import {
   existsSync,
   mkdirSync,
   globSync,
+  rmSync,
+  renameSync
 } from "node:fs";
 import { createRequire } from "node:module";
 
@@ -57,6 +59,14 @@ export function getBinPath(cmd: string) {
       return res.shift();
     }
     throw Error(`Command not found: ${cmd}. Is it in PATH?`);
+  }
+}
+
+export async function migrateOldConfig(confPath: string, dotName: string) {
+  const oldConfPath = path.join(HOME, `.${dotName}`, "config.yml");
+  if (existsSync(oldConfPath)) {
+    renameSync(oldConfPath, confPath);
+    rmSync(path.dirname(oldConfPath), { recursive: true, force: true });
   }
 }
 

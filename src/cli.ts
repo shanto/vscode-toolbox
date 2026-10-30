@@ -16,11 +16,17 @@ import {
   pkgInfo,
   promptToConfirm as promptConfirm,
   colors,
+  migrateOldConfig,
 } from "./utils.ts";
-const { version, name: command, homepage } = pkgInfo;
-const dotName = Object.keys(pkgInfo.bin).shift();
 
-const config = new YmlConfig(path.join(HOME, `.${dotName}`, "config.yml"));
+const { version, name: command, homepage } = pkgInfo;
+const dotName = Object.keys(pkgInfo.bin).at(0);
+if (!dotName) throw new Error("package.json:bin not set.");
+
+const confPath = path.join(HOME, ".vscode", dotName, "config.yml");
+
+const config = new YmlConfig(confPath);
+migrateOldConfig(confPath, dotName);
 
 let variant: VSCodeFlavor;
 
@@ -49,10 +55,10 @@ program
       const { confirm } = opts.auto
         ? { confirm: true }
         : await prompts(
-          promptConfirm(
-            `Profile named ${red(name)} does not exist. Create new?`,
-          ),
-        );
+            promptConfirm(
+              `Profile named ${red(name)} does not exist. Create new?`,
+            ),
+          );
       if (!confirm) process.exit(0);
       variant.createProfile(name);
     }
@@ -195,19 +201,19 @@ program
       this.args[0] && Object.hasOwn(buckets, this.args[0])
         ? { bucket: this.args[0] }
         : await prompts({
-          name: "bucket",
-          type: "select",
-          choices: () => {
-            return Object.keys(buckets).map((b) => {
-              return {
-                title: b,
-                value: b,
-                description: (buckets[b] as string[]).join(", "),
-              };
-            });
-          },
-          message: "Pick a bucket",
-        });
+            name: "bucket",
+            type: "select",
+            choices: () => {
+              return Object.keys(buckets).map((b) => {
+                return {
+                  title: b,
+                  value: b,
+                  description: (buckets[b] as string[]).join(", "),
+                };
+              });
+            },
+            message: "Pick a bucket",
+          });
     if (!bucket) return;
     const exts = config.get(`buckets.${bucket}`) as [];
     console.log(
@@ -282,4 +288,4 @@ program
     console.log(yaml.dump(config.load()));
   });
 
-program.parseAsync().then(() => { });
+program.parseAsync().then(() => {});
