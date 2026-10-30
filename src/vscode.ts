@@ -31,6 +31,10 @@ export class VSCodeFlavor {
       brand: "Antigravity IDE",
       data: "Antigravity IDE",
     },
+    buddy: {
+      brand: "CodeBuddy",
+      dot: "codebuddy"
+    }
   };
 
   constructor(name: string, binary?: string) {
@@ -48,7 +52,7 @@ export class VSCodeFlavor {
     const script = path.join(
       ...[path.dirname, path.basename].map((fn) => fn(this.binary, ".cmd")),
     );
-    let components = [path.resolve(path.join(this.binary, "..", ".."))];
+    const components = [path.resolve(path.join(this.binary, "..", ".."))];
     if (existsSync(script)) {
       const vmatch = readFileSync(script)
         .toString()
